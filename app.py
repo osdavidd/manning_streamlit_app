@@ -1,27 +1,19 @@
 import math
 from datetime import datetime
 import streamlit as st
+import streamlit.components.v1 as components
 
 # ============================================================
 # GUIA INGE - CONFIGURACION GENERAL DE LA APP
 # ============================================================
-
-st.set_page_config(
-    page_title="Calculo en canales abiertos - Manning",
-    page_icon="💧",
-    layout="wide"
-)
-
-G = 9.81  # gravedad en m/s²
-
+st.set_page_config(page_title="Calculo en canales abiertos - Manning", page_icon="💧", layout="wide")
+G = 9.81
 
 # ============================================================
 # GUIA INGE - DISEÑO VISUAL / COLORES / ESTILOS CSS
 # Aqui se controla el color de fondo, tarjetas, botones, textos, etc.
 # ============================================================
-
 st.markdown("""
-
 <style>
 :root{
     --bg:#EEF3F8;
@@ -37,121 +29,33 @@ st.markdown("""
     --sidebar-btn-hover:#7DD3FC;
     --sidebar-btn-text:#0F172A;
 }
-
-html, body, [data-testid="stAppViewContainer"]{
-    background:var(--bg) !important;
-    color:var(--text) !important;
-}
-
-[data-testid="stHeader"]{
-    background:rgba(238,243,248,.88) !important;
-    backdrop-filter:blur(10px);
-}
-
-[data-testid="stSidebar"]{
-    background:var(--nav) !important;
-    border-right:1px solid rgba(255,255,255,.08);
-}
-
-[data-testid="stSidebar"] h1,
-[data-testid="stSidebar"] h2,
-[data-testid="stSidebar"] h3,
-[data-testid="stSidebar"] p,
-[data-testid="stSidebar"] span,
-[data-testid="stSidebar"] label,
-[data-testid="stSidebar"] label p{
-    color:#F8FAFC !important;
-}
-
-[data-testid="stSidebar"] small,
-[data-testid="stSidebar"] .stMarkdown{
-    color:#CBD5E1 !important;
-}
-
-[data-testid="stMain"] p,
-[data-testid="stMain"] span,
-[data-testid="stMain"] label,
-[data-testid="stMain"] label p,
-[data-testid="stMain"] div[data-testid="stMarkdownContainer"] p{
-    color:var(--text) !important;
-}
-
-[data-testid="stMain"] .stTextInput label p,
-[data-testid="stMain"] .stNumberInput label p,
-[data-testid="stMain"] .stSelectbox label p{
-    color:#1E293B !important;
-    font-weight:700 !important;
-    font-size:.96rem !important;
-}
-
-[data-testid="stMain"] div[data-baseweb="input"],
-[data-testid="stMain"] div[data-baseweb="input"] > div{
-    background:var(--input) !important;
-    border:1.8px solid #9AA4AE !important;
-    border-radius:14px !important;
-    box-shadow:none !important;
-}
-
-[data-testid="stMain"] div[data-baseweb="input"] input,
-[data-testid="stMain"] input{
-    color:#0F172A !important;
-    -webkit-text-fill-color:#0F172A !important;
-    background:var(--input) !important;
-    caret-color:#2563EB !important;
-}
-
-[data-testid="stMain"] input::placeholder{
-    color:#94A3B8 !important;
-    -webkit-text-fill-color:#94A3B8 !important;
-}
-
-[data-testid="stMain"] div[data-baseweb="select"] > div{
-    background:#3B92D0 !important;
-    border:0 !important;
-    border-radius:14px !important;
-    color:white !important;
-}
-
-[data-testid="stMain"] div[data-baseweb="select"] span,
-[data-testid="stMain"] div[data-baseweb="select"] svg{
-    color:white !important;
-    fill:white !important;
-}
-
-[data-testid="stSidebar"] div[data-baseweb="select"] > div{
-    background:#111827 !important;
-    border:1px solid #334155 !important;
-    border-radius:12px !important;
-    color:#F8FAFC !important;
-}
-
-[data-testid="stSidebar"] div[data-baseweb="select"] span,
-[data-testid="stSidebar"] div[data-baseweb="select"] svg{
-    color:#F8FAFC !important;
-    fill:#F8FAFC !important;
-}
-
-.stButton > button{
-    border-radius:14px !important;
-    font-weight:800 !important;
-    border:0 !important;
-    min-height:44px !important;
-    box-shadow:0 6px 16px rgba(15,23,42,.10);
-}
+html, body, [data-testid="stAppViewContainer"]{background:var(--bg) !important;color:var(--text) !important;}
+[data-testid="stHeader"]{background:rgba(238,243,248,.88) !important;backdrop-filter:blur(10px);}
+[data-testid="stSidebar"]{background:var(--nav) !important;border-right:1px solid rgba(255,255,255,.08);}
+[data-testid="stSidebar"] h1,[data-testid="stSidebar"] h2,[data-testid="stSidebar"] h3,[data-testid="stSidebar"] p,[data-testid="stSidebar"] span,[data-testid="stSidebar"] label,[data-testid="stSidebar"] label p{color:#F8FAFC !important;}
+[data-testid="stSidebar"] small,[data-testid="stSidebar"] .stMarkdown{color:#CBD5E1 !important;}
+[data-testid="stMain"] p,[data-testid="stMain"] span,[data-testid="stMain"] label,[data-testid="stMain"] label p,[data-testid="stMain"] div[data-testid="stMarkdownContainer"] p{color:var(--text) !important;}
+[data-testid="stMain"] .stTextInput label p,[data-testid="stMain"] .stNumberInput label p,[data-testid="stMain"] .stSelectbox label p{color:#1E293B !important;font-weight:700 !important;font-size:.96rem !important;}
+[data-testid="stMain"] div[data-baseweb="input"],[data-testid="stMain"] div[data-baseweb="input"] > div{background:var(--input) !important;border:1.8px solid #9AA4AE !important;border-radius:14px !important;box-shadow:none !important;}
+[data-testid="stMain"] div[data-baseweb="input"] input,[data-testid="stMain"] input{color:#0F172A !important;-webkit-text-fill-color:#0F172A !important;background:var(--input) !important;caret-color:#2563EB !important;}
+[data-testid="stMain"] input::placeholder{color:#94A3B8 !important;-webkit-text-fill-color:#94A3B8 !important;}
+[data-testid="stMain"] div[data-baseweb="select"] > div{background:#3B92D0 !important;border:0 !important;border-radius:14px !important;color:white !important;}
+[data-testid="stMain"] div[data-baseweb="select"] span,[data-testid="stMain"] div[data-baseweb="select"] svg{color:white !important;fill:white !important;}
+[data-testid="stSidebar"] div[data-baseweb="select"] > div{background:#111827 !important;border:1px solid #334155 !important;border-radius:12px !important;color:#F8FAFC !important;}
+[data-testid="stSidebar"] div[data-baseweb="select"] span,[data-testid="stSidebar"] div[data-baseweb="select"] svg{color:#F8FAFC !important;fill:#F8FAFC !important;}
+.stButton > button{border-radius:14px !important;font-weight:800 !important;border:0 !important;min-height:44px !important;box-shadow:0 6px 16px rgba(15,23,42,.10);}
 
 /* ============================================================
    CAMBIO PEDIDO:
    Botones del panel izquierdo en color celeste y texto visible.
    Esto arregla "Cargar ejemplo" y "Limpiar cálculo".
    ============================================================ */
-
 [data-testid="stSidebar"] .stButton > button{
     background:linear-gradient(135deg, #7DD3FC, #38BDF8) !important;
     color:var(--sidebar-btn-text) !important;
     border:1px solid rgba(186,230,253,.85) !important;
     box-shadow:0 8px 20px rgba(14,165,233,.25) !important;
 }
-
 [data-testid="stSidebar"] .stButton > button p,
 [data-testid="stSidebar"] .stButton > button span,
 [data-testid="stSidebar"] .stButton > button div{
@@ -159,182 +63,49 @@ html, body, [data-testid="stAppViewContainer"]{
     -webkit-text-fill-color:var(--sidebar-btn-text) !important;
     font-weight:900 !important;
 }
-
 [data-testid="stSidebar"] .stButton > button:hover{
     background:linear-gradient(135deg, #BAE6FD, #7DD3FC) !important;
     color:#0F172A !important;
     transform:translateY(-1px);
 }
-
 [data-testid="stSidebar"] .stButton > button:hover p,
 [data-testid="stSidebar"] .stButton > button:hover span,
 [data-testid="stSidebar"] .stButton > button:hover div{
     color:#0F172A !important;
     -webkit-text-fill-color:#0F172A !important;
 }
+[data-testid="stSidebar"] .stButton > button:active{transform:translateY(0);}
 
-[data-testid="stSidebar"] .stButton > button:active{
-    transform:translateY(0);
-}
-
-.main-title{
-    font-size:2.55rem;
-    font-weight:800;
-    color:#0F172A;
-    margin-bottom:.15rem;
-    letter-spacing:-.035em;
-}
-
-.main-subtitle{
-    font-size:1.02rem;
-    color:#64748B;
-    margin-bottom:1rem;
-}
-
-.card{
-    background:#FFFFFF;
-    border:1px solid rgba(219,228,239,.82);
-    border-radius:24px;
-    padding:1.45rem 1.6rem;
-    box-shadow:0 12px 32px rgba(15,23,42,.055);
-    margin-bottom:1rem;
-}
-
-.card-title{
-    color:#1D4ED8;
-    font-size:1.45rem;
-    font-weight:800;
-    margin-bottom:1rem;
-    letter-spacing:-.02em;
-}
-
-.metric-grid{
-    display:grid;
-    grid-template-columns:repeat(4,minmax(0,1fr));
-    gap:.85rem;
-}
-
-.metric-box{
-    background:#F8FAFC;
-    border:1px solid #E2E8F0;
-    border-radius:18px;
-    padding:1rem;
-    min-height:110px;
-}
-
-.metric-label{
-    font-size:.88rem;
-    color:#64748B !important;
-    font-weight:700;
-}
-
-.metric-value{
-    font-size:1.65rem;
-    font-weight:800;
-    color:#0F172A !important;
-    margin-top:.15rem;
-}
-
-.metric-unit{
-    font-size:.82rem;
-    color:#64748B !important;
-    margin-top:.05rem;
-}
-
-.flow-box{
-    background:linear-gradient(135deg,#DBEAFE,#ECFEFF);
-    border:1px solid #BFDBFE;
-    border-radius:18px;
-    padding:1rem 1.2rem;
-    margin-top:.85rem;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-}
-
-.flow-label{
-    font-size:.98rem;
-    color:#075985 !important;
-    font-weight:800;
-}
-
-.flow-value{
-    font-size:1.2rem;
-    color:#0F172A !important;
-    font-weight:800;
-}
-
-.equation-box{
-    background:#F8FAFC;
-    border-left:5px solid #2563EB;
-    border-radius:14px;
-    padding:1rem 1.15rem;
-    color:#0F172A !important;
-    line-height:1.65;
-    font-family:Consolas,monospace;
-    font-size:.92rem;
-    white-space:pre-wrap;
-}
-
-.small-note{
-    color:#64748B !important;
-    font-size:.9rem;
-    margin-top:.5rem;
-}
-
-.section-pill{
-    display:inline-block;
-    padding:.42rem .75rem;
-    border-radius:999px;
-    background:#DBEAFE;
-    color:#1E40AF !important;
-    font-weight:800;
-    font-size:.9rem;
-    margin-bottom:.85rem;
-}
-
-.footer-text{
-    text-align:center;
-    color:#64748B !important;
-    font-size:.85rem;
-    margin-top:1.2rem;
-}
-
-@media(max-width:1100px){
-    .metric-grid{
-        grid-template-columns:repeat(2,minmax(0,1fr));
-    }
-}
-
-@media(max-width:700px){
-    .metric-grid{
-        grid-template-columns:1fr;
-    }
-    .main-title{
-        font-size:2rem;
-    }
-}
+.main-title{font-size:2.55rem;font-weight:800;color:#0F172A;margin-bottom:.15rem;letter-spacing:-.035em;}
+.main-subtitle{font-size:1.02rem;color:#64748B;margin-bottom:1rem;}
+.card{background:#FFFFFF;border:1px solid rgba(219,228,239,.82);border-radius:24px;padding:1.45rem 1.6rem;box-shadow:0 12px 32px rgba(15,23,42,.055);margin-bottom:1rem;}
+.card-title{color:#1D4ED8;font-size:1.45rem;font-weight:800;margin-bottom:1rem;letter-spacing:-.02em;}
+.metric-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.85rem;}
+.metric-box{background:#F8FAFC;border:1px solid #E2E8F0;border-radius:18px;padding:1rem;min-height:110px;}
+.metric-label{font-size:.88rem;color:#64748B !important;font-weight:700;}
+.metric-value{font-size:1.65rem;font-weight:800;color:#0F172A !important;margin-top:.15rem;}
+.metric-unit{font-size:.82rem;color:#64748B !important;margin-top:.05rem;}
+.flow-box{background:linear-gradient(135deg,#DBEAFE,#ECFEFF);border:1px solid #BFDBFE;border-radius:18px;padding:1rem 1.2rem;margin-top:.85rem;display:flex;justify-content:space-between;align-items:center;}
+.flow-label{font-size:.98rem;color:#075985 !important;font-weight:800;}.flow-value{font-size:1.2rem;color:#0F172A !important;font-weight:800;}
+.equation-box{background:#F8FAFC;border-left:5px solid #2563EB;border-radius:14px;padding:1rem 1.15rem;color:#0F172A !important;line-height:1.65;font-family:Consolas,monospace;font-size:.92rem;white-space:pre-wrap;}
+.small-note{color:#64748B !important;font-size:.9rem;margin-top:.5rem;}.section-pill{display:inline-block;padding:.42rem .75rem;border-radius:999px;background:#DBEAFE;color:#1E40AF !important;font-weight:800;font-size:.9rem;margin-bottom:.85rem;}
+.footer-text{text-align:center;color:#64748B !important;font-size:.85rem;margin-top:1.2rem;}
+@media(max-width:1100px){.metric-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}@media(max-width:700px){.metric-grid{grid-template-columns:1fr}.main-title{font-size:2rem}}
 </style>
-
 """, unsafe_allow_html=True)
-
 
 # ============================================================
 # GUIA INGE - CONVERSIONES DE UNIDADES
 # Aqui se convierten caudal, pendiente y longitudes al Sistema Internacional.
 # ============================================================
-
 def convert_q_to_m3s(value, unit):
     return value if unit == "m³/s" else value/1000 if unit == "L/s" else value*0.0283168466
-
 
 def convert_s_to_m_m(value, unit):
     return value if unit == "m/m" else value/100
 
-
 def convert_length_to_m(value, unit):
     return value if unit == "m" else value/100 if unit == "cm" else value/1000 if unit == "mm" else value*0.3048
-
 
 # ============================================================
 # GUIA INGE - ECUACION MANNING
@@ -342,23 +113,19 @@ def convert_length_to_m(value, unit):
 # Q = (1/n) A R^(2/3) S^(1/2)
 # R = A/P
 # ============================================================
-
 def manning_q(A, R, n, S):
     return (1/n) * A * (R ** (2/3)) * math.sqrt(S)
-
 
 def classify_flow(F):
     if abs(F-1) <= 0.01:
         return "Crítico"
     return "Subcrítico" if F < 1 else "Supercrítico"
 
-
 # ============================================================
 # GUIA INGE - GEOMETRIA HIDRAULICA DE LAS SECCIONES
 # Aqui estan las ecuaciones de area A, perimetro mojado P,
 # radio hidraulico R, espejo de agua T y profundidad hidraulica Dh.
 # ============================================================
-
 def geom_rectangular(y, b):
     A = b*y
     P = b + 2*y
@@ -366,7 +133,6 @@ def geom_rectangular(y, b):
     T = b
     Dh = A/T
     return A, P, R, T, Dh
-
 
 def geom_trapezoidal(y, b, z):
     A = (b + z*y)*y
@@ -376,7 +142,6 @@ def geom_trapezoidal(y, b, z):
     Dh = A/T
     return A, P, R, T, Dh
 
-
 def geom_triangular(y, z):
     A = z*y**2
     P = 2*y*math.sqrt(1+z**2)
@@ -385,11 +150,9 @@ def geom_triangular(y, z):
     Dh = A/T
     return A, P, R, T, Dh
 
-
 def geom_circular(y, D):
     if y <= 0 or y >= D:
         raise ValueError("En sección circular, el tirante debe estar entre 0 y el diámetro.")
-
     theta = 2 * math.acos(1 - 2*y/D)
     A = ((theta - math.sin(theta))*D**2)/8
     P = theta*D/2
@@ -398,13 +161,11 @@ def geom_circular(y, D):
     Dh = A/T
     return A, P, R, T, Dh
 
-
 # ============================================================
 # GUIA INGE - CALCULO DE CAUDAL PARA UN TIRANTE y
 # Esta funcion calcula Q para una profundidad y propuesta.
 # Luego se compara contra el Q ingresado por el usuario.
 # ============================================================
-
 def q_depth(section, y, n, S, b=0, z=0, D=0):
     if section == "Rectangular":
         A, P, R, T, Dh = geom_rectangular(y, b)
@@ -414,9 +175,7 @@ def q_depth(section, y, n, S, b=0, z=0, D=0):
         A, P, R, T, Dh = geom_triangular(y, z)
     else:
         A, P, R, T, Dh = geom_circular(y, D)
-
     return manning_q(A, R, n, S)
-
 
 # ============================================================
 # GUIA INGE - METODO NUMERICO BISECCION
@@ -424,7 +183,6 @@ def q_depth(section, y, n, S, b=0, z=0, D=0):
 # La app busca el valor de y que hace que:
 # q_depth(y) - Q = 0
 # ============================================================
-
 def bisection(func, a, b, tol=1e-8, max_iter=220):
     fa, fb = func(a), func(b)
 
@@ -445,13 +203,11 @@ def bisection(func, a, b, tol=1e-8, max_iter=220):
 
     return (a+b)/2
 
-
 # ============================================================
 # GUIA INGE - CALCULO TIRANTE EN SECCION CIRCULAR
 # En tuberia/canal circular puede haber mas de una raiz.
 # Por eso se recorre el intervalo entre 0 y D.
 # ============================================================
-
 def solve_circular(Q, n, S, D):
     def f(y):
         return q_depth("Circular", y, n, S, D=D) - Q
@@ -476,12 +232,10 @@ def solve_circular(Q, n, S, D):
 
     return min(roots)
 
-
 # ============================================================
 # GUIA INGE - CALCULO TIRANTE NORMAL
 # Esta funcion resuelve el tirante normal y para cualquier seccion.
 # ============================================================
-
 def solve_depth(section, Q, n, S, b=0, z=0, D=0):
     if section == "Circular":
         return solve_circular(Q, n, S, D)
@@ -503,13 +257,11 @@ def solve_depth(section, Q, n, S, b=0, z=0, D=0):
 
     return root
 
-
 # ============================================================
 # GUIA INGE - RESULTADOS HIDRAULICOS FINALES
 # Aqui se calcula:
 # y, A, P, R, T, Dh, V, Froude, Energia especifica y tipo de flujo.
 # ============================================================
-
 def calculate(section, Q, n, S, b=0, z=0, D=0):
     y = solve_depth(section, Q, n, S, b, z, D)
 
@@ -540,16 +292,13 @@ def calculate(section, Q, n, S, b=0, z=0, D=0):
         "Q_calc": manning_q(A, R, n, S)
     }
 
-
 # ============================================================
 # GUIA INGE - DIBUJOS SVG DE LAS SECCIONES
 # Esta parte solo dibuja la vista conceptual del canal.
 # No afecta los calculos hidraulicos.
 # ============================================================
-
 def clamp(v, a, b):
     return max(a, min(b, v))
-
 
 def svg(section, result=None, D=1):
     if result:
@@ -651,12 +400,10 @@ def svg(section, result=None, D=1):
 
     return f'<svg viewBox="0 0 680 360" width="100%" height="320" xmlns="http://www.w3.org/2000/svg">{common}{body}</svg>'
 
-
 # ============================================================
 # GUIA INGE - ECUACIONES MOSTRADAS EN PANTALLA
 # Estas son las formulas que aparecen en la tarjeta derecha.
 # ============================================================
-
 def equations(section):
     return {
         "Rectangular": "A = by\nP = b + 2y\nR = by/(b+2y)\nT = b",
@@ -665,12 +412,10 @@ def equations(section):
         "Circular": "θ = 2 arccos(1 - 2y/D)\nA = ((θ - senθ)D²)/8\nP = θD/2\nR = A/P\nT = 2√(y(D-y))"
     }[section]
 
-
 # ============================================================
 # GUIA INGE - PROCEDIMIENTO / REPORTE DESCARGABLE
 # Aqui se arma el texto que se muestra y se descarga como reporte.
 # ============================================================
-
 def procedure(section, project, conv, result):
     lines = [
         "CALCULO EN CANALES ABIERTOS - MANNING",
@@ -722,12 +467,10 @@ def procedure(section, project, conv, result):
 
     return "\n".join(lines)
 
-
 # ============================================================
 # GUIA INGE - ESTADO DE LA APP
 # Aqui Streamlit guarda resultados, procedimiento, seccion y datos convertidos.
 # ============================================================
-
 for key, default in {
     "result": None,
     "procedure": "",
@@ -738,12 +481,10 @@ for key, default in {
     if key not in st.session_state:
         st.session_state[key] = default
 
-
 # ============================================================
 # GUIA INGE - PANEL LATERAL
 # Aqui estan los selectores de seccion, unidades y botones.
 # ============================================================
-
 with st.sidebar:
     st.markdown(
         '<div style="padding:1.2rem 0">'
@@ -786,11 +527,9 @@ with st.sidebar:
         st.session_state.example = False
         st.rerun()
 
-
 # ============================================================
 # GUIA INGE - TITULO PRINCIPAL
 # ============================================================
-
 st.markdown(
     '<div class="main-title">Calculo en canales abiertos - Manning</div>',
     unsafe_allow_html=True
@@ -803,12 +542,10 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-
 # ============================================================
 # GUIA INGE - VALORES DE EJEMPLO
 # Estos son los datos que se cargan al presionar "Cargar ejemplo".
 # ============================================================
-
 ex = st.session_state.example
 
 proj_defaults = {
@@ -827,11 +564,9 @@ input_defaults = {
     "D": 0.60 if ex else 0.0
 }
 
-
 # ============================================================
 # GUIA INGE - DATOS DEL PROYECTO
 # ============================================================
-
 st.markdown('<div class="card"><div class="card-title">Datos del proyecto</div>', unsafe_allow_html=True)
 
 c1, c2 = st.columns(2)
@@ -846,11 +581,9 @@ with c2:
 
 st.markdown('</div>', unsafe_allow_html=True)
 
-
 # ============================================================
 # GUIA INGE - ENTRADAS HIDRAULICAS Y VISTA CONCEPTUAL
 # ============================================================
-
 left, right = st.columns([1.45, 1], gap="large")
 
 with left:
@@ -920,27 +653,27 @@ with left:
 
     st.markdown('</div>', unsafe_allow_html=True)
 
-
 with right:
     st.markdown('<div class="card"><div class="card-title">Vista conceptual</div>', unsafe_allow_html=True)
 
     preview = st.session_state.result if st.session_state.section == section else None
 
-    st.markdown(
+    # IMPORTANTE:
+    # Aqui se usa components.html para que el SVG salga como figura
+    # y no como codigo de texto.
+    components.html(
         svg(section, preview, D=st.session_state.conv.get("D", 1)),
-        unsafe_allow_html=True
+        height=340
     )
 
     st.markdown(f'<div class="section-pill">{section}</div>', unsafe_allow_html=True)
     st.markdown('<div class="equation-box">' + equations(section) + '</div>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
-
 # ============================================================
 # GUIA INGE - BOTON CALCULAR / VALIDACION / EJECUCION
 # Aqui se convierten los datos, se validan y se llama calculate().
 # ============================================================
-
 if calc_btn:
     try:
         if Q_in <= 0:
@@ -997,12 +730,10 @@ if calc_btn:
         st.session_state.procedure = ""
         st.error(str(e))
 
-
 # ============================================================
 # GUIA INGE - MOSTRAR RESULTADOS EN PANTALLA
 # Aqui aparecen las tarjetas de y, A, P, R, T, V, F y E.
 # ============================================================
-
 result = st.session_state.result
 
 if result is not None and st.session_state.section == section:
@@ -1067,11 +798,9 @@ if result is not None and st.session_state.section == section:
 
     st.markdown('</div>', unsafe_allow_html=True)
 
-
     # ========================================================
     # GUIA INGE - PROCEDIMIENTO MOSTRADO Y DESCARGA DEL REPORTE
     # ========================================================
-
     st.markdown('<div class="card"><div class="card-title">Procedimiento</div>', unsafe_allow_html=True)
 
     st.code(st.session_state.procedure, language="text")
@@ -1086,11 +815,9 @@ if result is not None and st.session_state.section == section:
 
     st.markdown('</div>', unsafe_allow_html=True)
 
-
 # ============================================================
 # GUIA INGE - PIE DE PAGINA
 # ============================================================
-
 st.markdown(
     '<div class="footer-text">'
     'El tirante normal se obtiene mediante bisección, debido a que la profundidad aparece dentro de las expresiones geométricas de la sección.'

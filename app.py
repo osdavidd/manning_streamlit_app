@@ -2,11 +2,17 @@ import math
 from datetime import datetime
 import streamlit as st
 import streamlit.components.v1 as components
+from fpdf import FPDF
 
 # ============================================================
 # GUIA INGE - CONFIGURACION GENERAL DE LA APP
 # ============================================================
-st.set_page_config(page_title="Cálculo hidráulico en canales abiertos - Manning", page_icon="💧", layout="wide")
+st.set_page_config(
+    page_title="Cálculo hidráulico en canales abiertos - Manning",
+    page_icon="💧",
+    layout="wide"
+)
+
 G = 9.81
 
 # ============================================================
@@ -45,11 +51,6 @@ html, body, [data-testid="stAppViewContainer"]{background:var(--bg) !important;c
 [data-testid="stSidebar"] div[data-baseweb="select"] span,[data-testid="stSidebar"] div[data-baseweb="select"] svg{color:#F8FAFC !important;fill:#F8FAFC !important;}
 .stButton > button{border-radius:14px !important;font-weight:800 !important;border:0 !important;min-height:44px !important;box-shadow:0 6px 16px rgba(15,23,42,.10);}
 
-/* ============================================================
-   CAMBIO PEDIDO:
-   Botones del panel izquierdo en color celeste y texto visible.
-   Esto arregla "Cargar ejemplo" y "Limpiar cálculo".
-   ============================================================ */
 [data-testid="stSidebar"] .stButton > button{
     background:linear-gradient(135deg, #7DD3FC, #38BDF8) !important;
     color:var(--sidebar-btn-text) !important;
@@ -86,11 +87,14 @@ html, body, [data-testid="stAppViewContainer"]{background:var(--bg) !important;c
 .metric-value{font-size:1.65rem;font-weight:800;color:#0F172A !important;margin-top:.15rem;}
 .metric-unit{font-size:.82rem;color:#64748B !important;margin-top:.05rem;}
 .flow-box{background:linear-gradient(135deg,#DBEAFE,#ECFEFF);border:1px solid #BFDBFE;border-radius:18px;padding:1rem 1.2rem;margin-top:.85rem;display:flex;justify-content:space-between;align-items:center;}
-.flow-label{font-size:.98rem;color:#075985 !important;font-weight:800;}.flow-value{font-size:1.2rem;color:#0F172A !important;font-weight:800;}
+.flow-label{font-size:.98rem;color:#075985 !important;font-weight:800;}
+.flow-value{font-size:1.2rem;color:#0F172A !important;font-weight:800;}
 .equation-box{background:#F8FAFC;border-left:5px solid #2563EB;border-radius:14px;padding:1rem 1.15rem;color:#0F172A !important;line-height:1.65;font-family:Consolas,monospace;font-size:.92rem;white-space:pre-wrap;}
-.small-note{color:#64748B !important;font-size:.9rem;margin-top:.5rem;}.section-pill{display:inline-block;padding:.42rem .75rem;border-radius:999px;background:#DBEAFE;color:#1E40AF !important;font-weight:800;font-size:.9rem;margin-bottom:.85rem;}
+.small-note{color:#64748B !important;font-size:.9rem;margin-top:.5rem;}
+.section-pill{display:inline-block;padding:.42rem .75rem;border-radius:999px;background:#DBEAFE;color:#1E40AF !important;font-weight:800;font-size:.9rem;margin-bottom:.85rem;}
 .footer-text{text-align:center;color:#64748B !important;font-size:.85rem;margin-top:1.2rem;}
-@media(max-width:1100px){.metric-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}@media(max-width:700px){.metric-grid{grid-template-columns:1fr}.main-title{font-size:2rem}}
+@media(max-width:1100px){.metric-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
+@media(max-width:700px){.metric-grid{grid-template-columns:1fr}.main-title{font-size:2rem}}
 </style>
 """, unsafe_allow_html=True)
 
@@ -99,13 +103,13 @@ html, body, [data-testid="stAppViewContainer"]{background:var(--bg) !important;c
 # Aqui se convierten caudal, pendiente y longitudes al Sistema Internacional.
 # ============================================================
 def convert_q_to_m3s(value, unit):
-    return value if unit == "m³/s" else value/1000 if unit == "L/s" else value*0.0283168466
+    return value if unit == "m³/s" else value / 1000 if unit == "L/s" else value * 0.0283168466
 
 def convert_s_to_m_m(value, unit):
-    return value if unit == "m/m" else value/100
+    return value if unit == "m/m" else value / 100
 
 def convert_length_to_m(value, unit):
-    return value if unit == "m" else value/100 if unit == "cm" else value/1000 if unit == "mm" else value*0.3048
+    return value if unit == "m" else value / 100 if unit == "cm" else value / 1000 if unit == "mm" else value * 0.3048
 
 # ============================================================
 # GUIA INGE - ECUACION MANNING
@@ -114,57 +118,54 @@ def convert_length_to_m(value, unit):
 # R = A/P
 # ============================================================
 def manning_q(A, R, n, S):
-    return (1/n) * A * (R ** (2/3)) * math.sqrt(S)
+    return (1 / n) * A * (R ** (2 / 3)) * math.sqrt(S)
 
 def classify_flow(F):
-    if abs(F-1) <= 0.01:
+    if abs(F - 1) <= 0.01:
         return "Crítico"
     return "Subcrítico" if F < 1 else "Supercrítico"
 
 # ============================================================
 # GUIA INGE - GEOMETRIA HIDRAULICA DE LAS SECCIONES
-# Aqui estan las ecuaciones de area A, perimetro mojado P,
-# radio hidraulico R, espejo de agua T y profundidad hidraulica Dh.
 # ============================================================
 def geom_rectangular(y, b):
-    A = b*y
-    P = b + 2*y
-    R = A/P
+    A = b * y
+    P = b + 2 * y
+    R = A / P
     T = b
-    Dh = A/T
+    Dh = A / T
     return A, P, R, T, Dh
 
 def geom_trapezoidal(y, b, z):
-    A = (b + z*y)*y
-    P = b + 2*y*math.sqrt(1+z**2)
-    R = A/P
-    T = b + 2*z*y
-    Dh = A/T
+    A = (b + z * y) * y
+    P = b + 2 * y * math.sqrt(1 + z ** 2)
+    R = A / P
+    T = b + 2 * z * y
+    Dh = A / T
     return A, P, R, T, Dh
 
 def geom_triangular(y, z):
-    A = z*y**2
-    P = 2*y*math.sqrt(1+z**2)
-    R = A/P
-    T = 2*z*y
-    Dh = A/T
+    A = z * y ** 2
+    P = 2 * y * math.sqrt(1 + z ** 2)
+    R = A / P
+    T = 2 * z * y
+    Dh = A / T
     return A, P, R, T, Dh
 
 def geom_circular(y, D):
     if y <= 0 or y >= D:
         raise ValueError("En sección circular, el tirante debe estar entre 0 y el diámetro.")
-    theta = 2 * math.acos(1 - 2*y/D)
-    A = ((theta - math.sin(theta))*D**2)/8
-    P = theta*D/2
-    R = A/P
-    T = 2*math.sqrt(y*(D-y))
-    Dh = A/T
+
+    theta = 2 * math.acos(1 - 2 * y / D)
+    A = ((theta - math.sin(theta)) * D ** 2) / 8
+    P = theta * D / 2
+    R = A / P
+    T = 2 * math.sqrt(y * (D - y))
+    Dh = A / T
     return A, P, R, T, Dh
 
 # ============================================================
 # GUIA INGE - CALCULO DE CAUDAL PARA UN TIRANTE y
-# Esta funcion calcula Q para una profundidad y propuesta.
-# Luego se compara contra el Q ingresado por el usuario.
 # ============================================================
 def q_depth(section, y, n, S, b=0, z=0, D=0):
     if section == "Rectangular":
@@ -175,52 +176,48 @@ def q_depth(section, y, n, S, b=0, z=0, D=0):
         A, P, R, T, Dh = geom_triangular(y, z)
     else:
         A, P, R, T, Dh = geom_circular(y, D)
+
     return manning_q(A, R, n, S)
 
 # ============================================================
 # GUIA INGE - METODO NUMERICO BISECCION
-# Se usa porque el tirante y aparece dentro de A, P y R.
-# La app busca el valor de y que hace que:
-# q_depth(y) - Q = 0
 # ============================================================
 def bisection(func, a, b, tol=1e-8, max_iter=220):
     fa, fb = func(a), func(b)
 
-    if fa*fb > 0:
+    if fa * fb > 0:
         return None
 
     for _ in range(max_iter):
-        c = (a+b)/2
+        c = (a + b) / 2
         fc = func(c)
 
-        if abs(fc) < tol or abs(b-a) < tol:
+        if abs(fc) < tol or abs(b - a) < tol:
             return c
 
-        if fa*fc < 0:
+        if fa * fc < 0:
             b, fb = c, fc
         else:
             a, fa = c, fc
 
-    return (a+b)/2
+    return (a + b) / 2
 
 # ============================================================
 # GUIA INGE - CALCULO TIRANTE EN SECCION CIRCULAR
-# En tuberia/canal circular puede haber mas de una raiz.
-# Por eso se recorre el intervalo entre 0 y D.
 # ============================================================
 def solve_circular(Q, n, S, D):
     def f(y):
         return q_depth("Circular", y, n, S, D=D) - Q
 
-    ymin, ymax, steps = 0.0001*D, 0.9999*D, 1000
+    ymin, ymax, steps = 0.0001 * D, 0.9999 * D, 1000
     prev_y, prev_f = ymin, f(ymin)
     roots = []
 
-    for i in range(1, steps+1):
-        y = ymin + (ymax-ymin)*i/steps
+    for i in range(1, steps + 1):
+        y = ymin + (ymax - ymin) * i / steps
         fy = f(y)
 
-        if prev_f*fy < 0:
+        if prev_f * fy < 0:
             root = bisection(f, prev_y, y)
             if root is not None:
                 roots.append(root)
@@ -234,7 +231,6 @@ def solve_circular(Q, n, S, D):
 
 # ============================================================
 # GUIA INGE - CALCULO TIRANTE NORMAL
-# Esta funcion resuelve el tirante normal y para cualquier seccion.
 # ============================================================
 def solve_depth(section, Q, n, S, b=0, z=0, D=0):
     if section == "Circular":
@@ -259,8 +255,6 @@ def solve_depth(section, Q, n, S, b=0, z=0, D=0):
 
 # ============================================================
 # GUIA INGE - RESULTADOS HIDRAULICOS FINALES
-# Aqui se calcula:
-# y, A, P, R, T, Dh, V, Froude, Energia especifica y tipo de flujo.
 # ============================================================
 def calculate(section, Q, n, S, b=0, z=0, D=0):
     y = solve_depth(section, Q, n, S, b, z, D)
@@ -274,9 +268,9 @@ def calculate(section, Q, n, S, b=0, z=0, D=0):
     else:
         A, P, R, T, Dh = geom_circular(y, D)
 
-    V = Q/A
-    F = V/math.sqrt(G*Dh)
-    E = y + V**2/(2*G)
+    V = Q / A
+    F = V / math.sqrt(G * Dh)
+    E = y + V ** 2 / (2 * G)
 
     return {
         "y": y,
@@ -294,15 +288,13 @@ def calculate(section, Q, n, S, b=0, z=0, D=0):
 
 # ============================================================
 # GUIA INGE - DIBUJOS SVG DE LAS SECCIONES
-# Esta parte solo dibuja la vista conceptual del canal.
-# No afecta los calculos hidraulicos.
 # ============================================================
 def clamp(v, a, b):
     return max(a, min(b, v))
 
 def svg(section, result=None, D=1):
     if result:
-        ratio = result["y"]/D if section == "Circular" and D > 0 else result["y"]/(result["y"]+1)
+        ratio = result["y"] / D if section == "Circular" and D > 0 else result["y"] / (result["y"] + 1)
     else:
         ratio = 0.55
 
@@ -334,9 +326,9 @@ def svg(section, result=None, D=1):
     '''
 
     if section == "Trapezoidal":
-        wy = 260 - ratio*140
-        lx = 166 + (wy-90)*0.62
-        rx = 514 - (wy-90)*0.62
+        wy = 260 - ratio * 140
+        lx = 166 + (wy - 90) * 0.62
+        rx = 514 - (wy - 90) * 0.62
 
         body = f'''
         {bg}
@@ -350,9 +342,9 @@ def svg(section, result=None, D=1):
         '''
 
     elif section == "Triangular":
-        wy = 285 - ratio*170
-        lx = 340 - (285-wy)*0.72
-        rx = 340 + (285-wy)*0.72
+        wy = 285 - ratio * 170
+        lx = 340 - (285 - wy) * 0.72
+        rx = 340 + (285 - wy) * 0.72
 
         body = f'''
         {bg}
@@ -365,7 +357,7 @@ def svg(section, result=None, D=1):
         '''
 
     elif section == "Rectangular":
-        wy = 285 - ratio*180
+        wy = 285 - ratio * 180
 
         body = f'''
         {bg}
@@ -377,8 +369,8 @@ def svg(section, result=None, D=1):
         '''
 
     else:
-        wy = 287 - ratio*204
-        wh = 287-wy
+        wy = 287 - ratio * 204
+        wh = 287 - wy
 
         body = f'''
         {bg}
@@ -402,7 +394,6 @@ def svg(section, result=None, D=1):
 
 # ============================================================
 # GUIA INGE - ECUACIONES MOSTRADAS EN PANTALLA
-# Estas son las formulas que aparecen en la tarjeta derecha.
 # ============================================================
 def equations(section):
     return {
@@ -413,13 +404,12 @@ def equations(section):
     }[section]
 
 # ============================================================
-# GUIA INGE - PROCEDIMIENTO / REPORTE DESCARGABLE
-# Aqui se arma el texto que se muestra y se descarga como reporte.
+# GUIA INGE - PROCEDIMIENTO / REPORTE EN PANTALLA
 # ============================================================
 def procedure(section, project, conv, result):
     lines = [
         "CALCULO EN CANALES ABIERTOS - MANNING",
-        "="*62,
+        "=" * 62,
         "",
         f"Lugar: {project['Lugar']}",
         f"Tramo: {project['Tramo']}",
@@ -468,14 +458,132 @@ def procedure(section, project, conv, result):
     return "\n".join(lines)
 
 # ============================================================
+# GUIA INGE - REPORTE PDF DESCARGABLE
+# Genera un PDF con tabla, datos, resultados, fecha y ecuaciones.
+# ============================================================
+def create_pdf_report(section, project, conv, result):
+    pdf = FPDF()
+    pdf.set_auto_page_break(auto=True, margin=15)
+    pdf.add_page()
+
+    pdf.set_font("Helvetica", "B", 16)
+    pdf.set_text_color(29, 78, 216)
+    pdf.cell(0, 10, "Reporte hidraulico - Manning", ln=True, align="C")
+
+    pdf.set_font("Helvetica", "", 10)
+    pdf.set_text_color(100, 116, 139)
+    fecha = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    pdf.cell(0, 7, f"Fecha de generacion: {fecha}", ln=True, align="C")
+    pdf.ln(6)
+
+    def titulo_seccion(titulo):
+        pdf.set_fill_color(219, 234, 254)
+        pdf.set_text_color(15, 23, 42)
+        pdf.set_font("Helvetica", "B", 12)
+        pdf.cell(0, 8, titulo, ln=True, fill=True)
+        pdf.ln(2)
+
+    def tabla(filas):
+        pdf.set_font("Helvetica", "", 10)
+
+        for nombre, valor in filas:
+            pdf.set_fill_color(248, 250, 252)
+            pdf.set_text_color(15, 23, 42)
+
+            pdf.set_font("Helvetica", "B", 10)
+            pdf.cell(65, 8, str(nombre), border=1, fill=True)
+
+            pdf.set_font("Helvetica", "", 10)
+            pdf.cell(115, 8, str(valor), border=1, ln=True)
+
+        pdf.ln(5)
+
+    titulo_seccion("Datos del proyecto")
+    tabla([
+        ("Lugar", project.get("Lugar", "")),
+        ("Tramo", project.get("Tramo", "")),
+        ("Proyecto", project.get("Proyecto", "")),
+        ("Revestimiento", project.get("Revestimiento", "")),
+        ("Tipo de seccion", section)
+    ])
+
+    datos_convertidos = [
+        ("Caudal Q", f"{conv['Q']:.6f} m3/s"),
+        ("Rugosidad n", f"{conv['n']:.6f}"),
+        ("Pendiente S", f"{conv['S']:.6f} m/m")
+    ]
+
+    if section in ["Rectangular", "Trapezoidal"]:
+        datos_convertidos.append(("Solera b", f"{conv['b']:.6f} m"))
+
+    if section in ["Trapezoidal", "Triangular"]:
+        datos_convertidos.append(("Talud Z", f"{conv['z']:.6f}"))
+
+    if section == "Circular":
+        datos_convertidos.append(("Diametro D", f"{conv['D']:.6f} m"))
+
+    titulo_seccion("Datos convertidos al Sistema Internacional")
+    tabla(datos_convertidos)
+
+    titulo_seccion("Resultados calculados")
+    tabla([
+        ("Tirante normal y", f"{result['y']:.6f} m"),
+        ("Area hidraulica A", f"{result['A']:.6f} m2"),
+        ("Perimetro mojado P", f"{result['P']:.6f} m"),
+        ("Radio hidraulico R", f"{result['R']:.6f} m"),
+        ("Espejo de agua T", f"{result['T']:.6f} m"),
+        ("Profundidad hidraulica Dh", f"{result['Dh']:.6f} m"),
+        ("Velocidad V", f"{result['V']:.6f} m/s"),
+        ("Numero de Froude F", f"{result['F']:.6f}"),
+        ("Energia especifica E", f"{result['E']:.6f} m"),
+        ("Q calculado", f"{result['Q_calc']:.6f} m3/s"),
+        ("Tipo de flujo", result["type"])
+    ])
+
+    titulo_seccion("Ecuaciones utilizadas")
+
+    ecuaciones = (
+        "Ecuacion de Manning:\n"
+        "Q = (1/n) A R^(2/3) S^(1/2)\n"
+        "R = A/P\n\n"
+        "Geometria de la seccion:\n"
+        + equations(section)
+        .replace("√", "sqrt")
+        .replace("θ", "theta")
+        .replace("²", "^2")
+        .replace("³", "^3")
+    )
+
+    pdf.set_font("Courier", "", 9)
+    pdf.set_text_color(15, 23, 42)
+    pdf.multi_cell(0, 6, ecuaciones)
+
+    pdf.ln(3)
+    pdf.set_font("Helvetica", "I", 9)
+    pdf.set_text_color(100, 116, 139)
+    pdf.multi_cell(
+        0,
+        6,
+        "Nota: El tirante normal se obtiene mediante el metodo de biseccion, "
+        "debido a que la profundidad aparece dentro de las expresiones geometricas de la seccion."
+    )
+
+    pdf_bytes = pdf.output(dest="S")
+
+    if isinstance(pdf_bytes, str):
+        return pdf_bytes.encode("latin-1")
+
+    return bytes(pdf_bytes)
+
+# ============================================================
 # GUIA INGE - ESTADO DE LA APP
-# Aqui Streamlit guarda resultados, procedimiento, seccion y datos convertidos.
 # ============================================================
 for key, default in {
     "result": None,
     "procedure": "",
     "section": "Trapezoidal",
     "conv": {},
+    "project": {},
     "example": False
 }.items():
     if key not in st.session_state:
@@ -483,7 +591,6 @@ for key, default in {
 
 # ============================================================
 # GUIA INGE - PANEL LATERAL
-# Aqui estan los selectores de seccion, unidades y botones.
 # ============================================================
 with st.sidebar:
     st.markdown(
@@ -524,6 +631,7 @@ with st.sidebar:
         st.session_state.result = None
         st.session_state.procedure = ""
         st.session_state.conv = {}
+        st.session_state.project = {}
         st.session_state.example = False
         st.rerun()
 
@@ -531,7 +639,7 @@ with st.sidebar:
 # GUIA INGE - TITULO PRINCIPAL
 # ============================================================
 st.markdown(
-    '<div class="main-title">Calculo en canales abiertos - Manning</div>',
+    '<div class="main-title">Cálculo en canales abiertos - Manning</div>',
     unsafe_allow_html=True
 )
 
@@ -544,7 +652,6 @@ st.markdown(
 
 # ============================================================
 # GUIA INGE - VALORES DE EJEMPLO
-# Estos son los datos que se cargan al presionar "Cargar ejemplo".
 # ============================================================
 ex = st.session_state.example
 
@@ -658,9 +765,6 @@ with right:
 
     preview = st.session_state.result if st.session_state.section == section else None
 
-    # IMPORTANTE:
-    # Aqui se usa components.html para que el SVG salga como figura
-    # y no como codigo de texto.
     components.html(
         svg(section, preview, D=st.session_state.conv.get("D", 1)),
         height=340
@@ -672,7 +776,6 @@ with right:
 
 # ============================================================
 # GUIA INGE - BOTON CALCULAR / VALIDACION / EJECUCION
-# Aqui se convierten los datos, se validan y se llama calculate().
 # ============================================================
 if calc_btn:
     try:
@@ -720,6 +823,7 @@ if calc_btn:
 
         st.session_state.result = result
         st.session_state.conv = conv
+        st.session_state.project = proj
         st.session_state.procedure = procedure(section, proj, conv, result)
         st.session_state.section = section
 
@@ -732,7 +836,6 @@ if calc_btn:
 
 # ============================================================
 # GUIA INGE - MOSTRAR RESULTADOS EN PANTALLA
-# Aqui aparecen las tarjetas de y, A, P, R, T, V, F y E.
 # ============================================================
 result = st.session_state.result
 
@@ -799,17 +902,24 @@ if result is not None and st.session_state.section == section:
     st.markdown('</div>', unsafe_allow_html=True)
 
     # ========================================================
-    # GUIA INGE - PROCEDIMIENTO MOSTRADO Y DESCARGA DEL REPORTE
+    # GUIA INGE - PROCEDIMIENTO MOSTRADO Y DESCARGA DEL PDF
     # ========================================================
     st.markdown('<div class="card"><div class="card-title">Procedimiento</div>', unsafe_allow_html=True)
 
     st.code(st.session_state.procedure, language="text")
 
+    pdf_report = create_pdf_report(
+        section,
+        st.session_state.project,
+        st.session_state.conv,
+        result
+    )
+
     st.download_button(
-        "Descargar reporte",
-        st.session_state.procedure.encode("utf-8"),
-        file_name="reporte_manning_" + datetime.now().strftime("%Y%m%d_%H%M%S") + ".txt",
-        mime="text/plain",
+        "Descargar reporte PDF",
+        data=pdf_report,
+        file_name="reporte_manning_" + datetime.now().strftime("%Y%m%d_%H%M%S") + ".pdf",
+        mime="application/pdf",
         use_container_width=True
     )
 

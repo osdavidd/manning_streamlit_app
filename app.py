@@ -6,7 +6,7 @@ import streamlit.components.v1 as components
 # ============================================================
 # GUIA INGE - CONFIGURACION GENERAL DE LA APP
 # ============================================================
-st.set_page_config(page_title="Calculo en canales abiertos - Manning", page_icon="💧", layout="wide")
+st.set_page_config(page_title="Cálculo hidráulico en canales abiertos - Manning", page_icon="💧", layout="wide")
 G = 9.81
 
 # ============================================================
